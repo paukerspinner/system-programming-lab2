@@ -19,7 +19,8 @@
 
 char* logfile;
 time_t timeStartListen;
-int hostnameCount = 0;
+int numberServedRequest = 0;
+int numberSuccessServedRequest = 0;
 int daemonMode = 0;
 
 void daemonize() {
@@ -88,11 +89,6 @@ char* messageOfError(int errornum) {
 	return message;
 };
 
-// Count required hostname
-void countHostname() {
-	hostnameCount++;
-}
-
 // Create message of catch hostname from client
 char* createMessageCatchHostname(char* hostname) {
 	char* message = (char *) calloc(100, sizeof(char));
@@ -101,9 +97,10 @@ char* createMessageCatchHostname(char* hostname) {
 }
 
 // Create message of response to client
-char* createMessageResponse(char* hostname) {
+char* successServing(char* hostname) {
 	char* message = (char *) calloc(100, sizeof(char));
 	sprintf(message, "Complete response of hostname %s\n", hostname);
+	kill(getppid(), SIGUSR2);
 	return message;
 }
 
@@ -172,7 +169,9 @@ char* createMessageWokingTime() {
 // Create message of counting required hostname
 char* createMessageCountHost() {
 	char* message = (char*) calloc(100, sizeof(char));
-	sprintf(message, "Number of required hostname: %d\n", hostnameCount);
+	sprintf(message, "Number of served request: SUCCESS %d, FAIL %d\n",
+			numberSuccessServedRequest, 
+			numberServedRequest - numberSuccessServedRequest);
 	return message;
 }
 
@@ -192,6 +191,11 @@ void signalHandler(int sig) {
 			showMessage(createMessageWokingTime());
 			showMessage(createMessageCountHost());
 			break;
+		case SIGCHLD:
+			numberServedRequest++;
+			break;
+		case SIGUSR2:
+			numberSuccessServedRequest++;
 	}
 }
 

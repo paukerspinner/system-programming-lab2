@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 	servaddr.sin_family = AF_INET;
 
 	// Set socket options
-	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &socketOption, sizeof(socketOption))) {
+	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEPORT, &socketOption, sizeof(socketOption))) {
 		showMessage(messageOfError(errno));
 		exit(1);
 	};
@@ -106,6 +106,8 @@ int main(int argc, char **argv) {
 	sigaction(SIGQUIT, &act, NULL);
 	sigaction(SIGTERM, &act, NULL);
 	sigaction(SIGUSR1, &act, NULL);
+	sigaction(SIGCHLD, &act, NULL);
+	sigaction(SIGUSR2, &act, NULL);
 	pid_t pid;
 	while(1) {
 		// Extract the first connection request on the queue, at this, connection client-server is established
@@ -114,7 +116,6 @@ int main(int argc, char **argv) {
 		//receive message from server
 		memset(&buffer, '\0', sizeof(buffer));
 		read(newSocket, buffer, 1024);
-		countHostname();
 		
 		// Create a new proccess
 		pid = fork();
@@ -126,7 +127,8 @@ int main(int argc, char **argv) {
 			sleep(waitTime);
 			// send the response
 			send(newSocket, message, strlen(message), 0);
-			showMessage(createMessageResponse(buffer));
+			if (strlen(buffer) > 6) exit(1);
+			showMessage(successServing(buffer));
 			exit(1);
 		}
 	}

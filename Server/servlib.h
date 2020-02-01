@@ -10,9 +10,8 @@ void printManual();
 void createLogfile(char*);
 void setTimeStartListen();
 void daemonize();
-void countHostname();
 char* messageOfError(int);
-char* createMessageResponse(char*);
+char* successServing(char*);
 void showMessage(char*);
 
 #endif
